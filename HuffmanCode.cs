@@ -8,37 +8,44 @@ using Priority_Queue;
 
 namespace HuffmanCode
 {
-    class HuffmanEncode
+    class HuffmanCode
     {
-        public static Tuple<BitArray, TreeNode> BuildHuffmanCode(string str)
+        public static Tuple<BitArray, TreeNode?> EncodeString(string str)
         {
             Dictionary<char, int> charCount = BuildFrequencyMap(str);
 
             SimplePriorityQueue<TreeNode> heap = BuildPriorityQueue(charCount);
 
-            TreeNode? tree = BuildTree(heap);
+            TreeNode? tree = BuildHuffmanTree(heap);
 
-            //foreach (KeyValuePair<char, int> item in charCount)
-            //{
-            //    Console.WriteLine(String.Format("{0} {1}", item.Key.ToString(), item.Value.ToString()));
-            //}
+            TreeNode.PrintTreeBFS(tree);
+            Console.WriteLine();
 
+            Dictionary<char, BitArray> huffmanCode = BuildHuffmanCode(tree);
 
-            //PrintTreeBFS(tree);
+            PrintHuffmanCode(huffmanCode);
+            Console.WriteLine();
 
-            Dictionary<char, BitArray> huffmanCode = HuffmanCode(tree);
+            BitArray concatenatedBits = EncodeStringToBits(str, huffmanCode);
 
+            Console.WriteLine(BitArrayFullString(concatenatedBits));
+            Console.WriteLine();
+
+            return new Tuple<BitArray, TreeNode?>(concatenatedBits, tree);
+        }
+
+        public static string DecodeString(BitArray bits, TreeNode? huffmanCode)
+        {
+            return DecodeBitsToString(bits, huffmanCode).ToString();
+        } 
+
+        public static void PrintHuffmanCode(Dictionary<char, BitArray> huffmanCode)
+        {
             foreach (KeyValuePair<char, BitArray> item in huffmanCode)
             {
                 string bitStr = BitArrayFullString(item.Value);
                 Console.WriteLine(String.Format("{0}, NumBits={1}, {2}", item.Key.ToString(), item.Value.Count, bitStr));
             }
-
-            BitArray concatenatedBits = ConcatenateBits(str, huffmanCode);
-
-            Console.WriteLine(BitArrayFullString(concatenatedBits));
-
-            return new Tuple<BitArray, TreeNode>(concatenatedBits, tree);
         }
 
         
@@ -60,34 +67,6 @@ namespace HuffmanCode
 
             return stringBuilder.ToString();
 
-        }
-
-        public static string BitArrayString(BitArray bitArray)
-        { 
-            Stack<char> charStack = new Stack<char>();
-            int index = 0;
-            bool bit;
-            char bitChar;
-            while (index < bitArray.Count)
-            {
-                bit = bitArray.Get(index);
-                bitChar = bit ? '1' : '0';
-                charStack.Push(bitChar);
-                ++index;
-            }
-
-            while (charStack.Count > 1 && charStack.Peek() == '0')
-            {
-                charStack.Pop();
-            }
- 
-
-            StringBuilder stringBuilder = new StringBuilder(8);
-            foreach (char charBit in charStack)
-            {
-                stringBuilder.Append(charBit);
-            }
-            return stringBuilder.ToString();
         }
 
         private static Dictionary<char, int> BuildFrequencyMap(string str)
@@ -123,7 +102,7 @@ namespace HuffmanCode
             return heap;
         }
 
-        private static TreeNode? BuildTree(SimplePriorityQueue<TreeNode> heap)
+        private static TreeNode? BuildHuffmanTree(SimplePriorityQueue<TreeNode> heap)
         {
             if (heap.Count == 0)
             {
@@ -145,7 +124,7 @@ namespace HuffmanCode
             return null;
         }
 
-        private static Dictionary<char, BitArray> HuffmanCode(TreeNode? node)
+        private static Dictionary<char, BitArray> BuildHuffmanCode(TreeNode? node)
         {
             Dictionary<char, BitArray> huffmanCode = new Dictionary<char, BitArray>();
             Queue<TreeNode> queue = new Queue<TreeNode>();
@@ -170,14 +149,13 @@ namespace HuffmanCode
                 }
                 if (item.IsLeafNode())
                 {
-                    item.StripLeftZeroes();
                     huffmanCode.Add(item.Character, item.HFCode);
                 }
             }
             return huffmanCode;
         }
 
-        private static BitArray ConcatenateBits(string str, Dictionary<char, BitArray> huffmanCode)
+        private static BitArray EncodeStringToBits(string str, Dictionary<char, BitArray> huffmanCode)
         {
             BitArray bitArray = new BitArray(0);
             foreach (char c in str)
@@ -185,17 +163,17 @@ namespace HuffmanCode
                 if (huffmanCode.ContainsKey(c))
                 {
                     //Make deep copy of item value
-                    BitArray bits = new BitArray(huffmanCode[c]);
+                    BitArray bitsToAdd = new BitArray(huffmanCode[c]);
                     
-                    int extend = bits.Count;
+                    int extend = bitsToAdd.Count;
 
                     bitArray.Length += extend;
                     bitArray.LeftShift(extend);
 
-                    int current = bitArray.Count;
-                    bits.Length += (current - extend);
+                    int currentLen = bitArray.Count;
+                    bitsToAdd.Length += (currentLen - extend);
                     
-                    bitArray.Or(bits);
+                    bitArray.Or(bitsToAdd);
                 }
                 else
                 {
@@ -203,6 +181,48 @@ namespace HuffmanCode
                 }
             }
             return bitArray;
+        }
+
+        private static StringBuilder DecodeBitsToString(BitArray bitArray, TreeNode? huffmanCode)
+        {
+            if (huffmanCode == null)
+            {
+                throw new Exception("node is null");
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            TreeNode node = huffmanCode;
+
+            for (int i = bitArray.Count - 1; i >= 0; i--)
+            {
+                bool bit = bitArray.Get(i);
+
+                if (node == null)
+                {
+                    throw new Exception("node is null");
+                }
+
+                if (!(node == null) && node.IsLeafNode())
+                {
+                    stringBuilder.Append(node.Character);
+                    node = huffmanCode;
+                }
+
+                if (bit.Equals(false))
+                {
+                    node = node.Right;
+                }
+                else  //c is '1'
+                {
+                    node = node.Left;
+                }
+
+                if (!(node == null) && node.IsLeafNode())
+                {
+                    stringBuilder.Append(node.Character);
+                    node = huffmanCode;
+                }
+            }
+            return stringBuilder;
         }
     }
 }

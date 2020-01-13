@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace HuffmanCode
 {
     public class TreeNode
     {
-        public const int HFCodeStartSize = 32;
+        public const int HFCodeStartSize = 0;
         public char Character { get; set; }
         public int Frequency { get; set; }
         public TreeNode? Left { get; set; }
@@ -61,6 +62,42 @@ namespace HuffmanCode
                 flag.RightShift(1);
                 flag.Length--;
                 flag.Set(length - 1, true);
+            }
+        }
+
+        public void PrintSelfBFS()
+        {
+            PrintTreeBFS(this);
+        }
+
+        public static void PrintTreeBFS(TreeNode? node)
+        {
+            Queue<TreeNode> queue = new Queue<TreeNode>();
+            if (!(node == null))
+            {
+                queue.Enqueue(node);
+            }
+
+            int levelCount = 1;
+            while (queue.Count > 0)
+            {
+                TreeNode item = queue.Dequeue();
+                levelCount--;
+
+                if (item.Left != null)
+                {
+                    queue.Enqueue(item.Left);
+                }
+                if (item.Right != null)
+                {
+                    queue.Enqueue(item.Right);
+                }
+                Console.Write(item);
+                if (levelCount == 0)
+                {
+                    Console.WriteLine();
+                    levelCount = queue.Count;
+                }
             }
         }
     }
