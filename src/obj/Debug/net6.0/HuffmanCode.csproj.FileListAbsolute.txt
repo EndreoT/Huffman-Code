@@ -1,0 +1,15 @@
+C:\Users\endre\source\repos\Huffman-Code\src\bin\Debug\net6.0\HuffmanCode.exe
+C:\Users\endre\source\repos\Huffman-Code\src\bin\Debug\net6.0\HuffmanCode.deps.json
+C:\Users\endre\source\repos\Huffman-Code\src\bin\Debug\net6.0\HuffmanCode.runtimeconfig.json
+C:\Users\endre\source\repos\Huffman-Code\src\bin\Debug\net6.0\HuffmanCode.dll
+C:\Users\endre\source\repos\Huffman-Code\src\bin\Debug\net6.0\HuffmanCode.pdb
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.csproj.AssemblyReference.cache
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.AssemblyInfoInputs.cache
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.AssemblyInfo.cs
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.csproj.CoreCompileInputs.cache
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.dll
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\refint\HuffmanCode.dll
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.pdb
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\HuffmanCode.genruntimeconfig.cache
+C:\Users\endre\source\repos\Huffman-Code\src\obj\Debug\net6.0\ref\HuffmanCode.dll
