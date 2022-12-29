@@ -1,221 +1,58 @@
-﻿using Huffman_Code.Extensions;
+﻿using HuffmanCode.Extensions;
 using System.Collections;
 using System.Text;
 
-namespace Huffman_Code;
+namespace HuffmanCode;
 
-internal class HuffmanCode
+public class HuffmanCode
 {
-    public static Tuple<BitArray, TreeNode?> EncodeString(string str)
+    public static EncodedStringContext EncodeString(string str)
     {
-        Dictionary<char, int> charCount = BuildFrequencyMap(str);
+        if (str is null)
+        {
+            throw new ArgumentNullException(nameof(str));
+        }
 
-        PriorityQueue<TreeNode, int> heap = BuildPriorityQueue(charCount);
+        Dictionary<char, int> charCount = Utils.BuildCharacterFrequencyMap(str);
 
-        TreeNode? tree = BuildHuffmanTree(heap);
+        TreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charCount);
 
-        TreeNode.PrintTreeBFS(tree);
-        Console.WriteLine();
-
-        Dictionary<char, BitArray> huffmanCode = BuildHuffmanCode(tree);
+        Dictionary<char, BitArray> huffmanCode = Utils.BuildCharacterMapToHuffmanCode(root);
 
         PrintHuffmanCode(huffmanCode);
-        Console.WriteLine();
 
-        BitArray concatenatedBits = EncodeStringToBits(str, huffmanCode);
+        BitArray bits = Utils.EncodeStringToBits(str, huffmanCode);
 
-        Console.WriteLine(BitArrayFullString(concatenatedBits));
-        Console.WriteLine();
+        Console.WriteLine($"{bits.ToStringReversed()} : actual bit string\n");
 
-        return new Tuple<BitArray, TreeNode?>(concatenatedBits, tree);
+        Stream stream = new MemoryStream();
+
+        using BinaryWriter writer = new(stream, Encoding.UTF8, true);
+
+        writer.Write(Utils.BitArrayToByteArray(bits));
+
+        return new EncodedStringContext(stream, bits.Length, root);
     }
 
-    public static string DecodeString(BitArray bits, TreeNode? huffmanCode)
+    public static string DecodeToString(Stream stream, int numBitsToRead, TreeNode? root)
     {
-        return DecodeBitsToString(bits, huffmanCode).ToString();
+        if (stream is null || numBitsToRead <= 0 || root is null)
+        {
+            throw new ArgumentException("");
+        }
+
+        return Utils.DecodeToString(stream, numBitsToRead, root).ToString();
     }
 
     public static void PrintHuffmanCode(Dictionary<char, BitArray> huffmanCode)
     {
         foreach (KeyValuePair<char, BitArray> item in huffmanCode)
         {
-            string bitStr = BitArrayFullString(item.Value);
-            Console.WriteLine(String.Format("{0}, NumBits={1}, {2}", item.Key.ToString(), item.Value.Count, bitStr));
-        }
-    }
-
-    public static string BitArrayFullString(BitArray bitArray)
-    {
-        StringBuilder stringBuilder = new StringBuilder(8);
-        int index = 0;
-        bool bit;
-        char bitChar;
-        while (index < bitArray.Count)
-        {
-            bit = bitArray.Get(index);
-            bitChar = bit ? '1' : '0';
-            stringBuilder.Append(bitChar);
-            ++index;
-        }
-        stringBuilder.ReverseStringBuilder();
-
-        return stringBuilder.ToString();
-    }
-
-    private static Dictionary<char, int> BuildFrequencyMap(string str)
-    {
-        Dictionary<char, int> charCount = new Dictionary<char, int>();
-        foreach (char c in str)
-        {
-            if (charCount.ContainsKey(c))
-            {
-                charCount[c] += 1;
-            }
-            else
-            {
-                charCount[c] = 1;
-            }
-        }
-        return charCount;
-    }
-
-    private static PriorityQueue<TreeNode, int> BuildPriorityQueue(Dictionary<char, int> charMap)
-    {
-        PriorityQueue<TreeNode, int> heap = new ();
-
-        int frequency;
-        char c;
-        TreeNode charNode;
-        foreach (KeyValuePair<char, int> item in charMap)
-        {
-            frequency = item.Value;
-            c = item.Key;
-            charNode = new TreeNode(frequency, c, null, null);
-            heap.Enqueue(charNode, frequency);
-        }
-        return heap;
-    }
-
-    private static TreeNode? BuildHuffmanTree(PriorityQueue<TreeNode, int> heap)
-    {
-        if (heap.Count == 0)
-        {
-            return null;
-        }
-        while (heap.Count > 1)
-        {
-            TreeNode right = heap.Dequeue();
-            TreeNode left = heap.Dequeue();
-            int parentFrequency = left.Frequency + right.Frequency;
-
-            TreeNode parent = new TreeNode(parentFrequency, '\0', left, right);
-            heap.Enqueue(parent, parentFrequency);
-        }
-        if (heap.Count == 1)
-        {
-            return heap.Dequeue();
-        }
-        return null;
-    }
-
-    private static Dictionary<char, BitArray> BuildHuffmanCode(TreeNode? node)
-    {
-        Dictionary<char, BitArray> huffmanCode = new Dictionary<char, BitArray>();
-        Queue<TreeNode> queue = new Queue<TreeNode>();
-        if (!(node == null))
-        {
-            queue.Enqueue(node);
+            BitArray b = item.Value;
+            string bitStr = b.ToStringReversed();
+            Console.WriteLine($"{item.Key}, NumBits={item.Value.Count}, {bitStr}");
         }
 
-        while (queue.Count > 0)
-        {
-            TreeNode item = queue.Dequeue();
-
-            if (item.Left != null)
-            {
-                item.Left.HFCode = item.GetLShiftPlusOne();
-                queue.Enqueue(item.Left);
-            }
-            if (item.Right != null)
-            {
-                item.Right.HFCode = item.GetLShiftPlusZero();
-                queue.Enqueue(item.Right);
-            }
-            if (item.IsLeafNode())
-            {
-                huffmanCode.Add(item.Character, item.HFCode);
-            }
-        }
-        return huffmanCode;
-    }
-
-    private static BitArray EncodeStringToBits(string str, Dictionary<char, BitArray> huffmanCode)
-    {
-        BitArray bitArray = new BitArray(0);
-        foreach (char c in str)
-        {
-            if (huffmanCode.ContainsKey(c))
-            {
-                //Make deep copy of item value
-                BitArray bitsToAdd = new(huffmanCode[c]);
-
-                int extend = bitsToAdd.Count;
-
-                bitArray.Length += extend;
-                bitArray.LeftShift(extend);
-
-                int currentLen = bitArray.Count;
-                bitsToAdd.Length += (currentLen - extend);
-
-                bitArray.Or(bitsToAdd);
-            }
-            else
-            {
-                throw new KeyNotFoundException(String.Format("{0} does not exist.", c.ToString()));
-            }
-        }
-        return bitArray;
-    }
-
-    private static StringBuilder DecodeBitsToString(BitArray bitArray, TreeNode? huffmanCode)
-    {
-        if (huffmanCode == null)
-        {
-            throw new Exception("node is null");
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        TreeNode node = huffmanCode;
-
-        for (int i = bitArray.Count - 1; i >= 0; i--)
-        {
-            bool bit = bitArray.Get(i);
-
-            if (node == null)
-            {
-                throw new Exception("node is null");
-            }
-
-            if (!(node == null) && node.IsLeafNode())
-            {
-                stringBuilder.Append(node.Character);
-                node = huffmanCode;
-            }
-
-            if (bit.Equals(false))
-            {
-                node = node.Right;
-            }
-            else  //c is '1'
-            {
-                node = node.Left;
-            }
-
-            if (!(node == null) && node.IsLeafNode())
-            {
-                stringBuilder.Append(node.Character);
-                node = huffmanCode;
-            }
-        }
-        return stringBuilder;
+        Console.WriteLine();
     }
 }

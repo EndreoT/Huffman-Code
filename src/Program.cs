@@ -1,33 +1,26 @@
-﻿namespace Huffman_Code;
+﻿using HuffmanCode.Extensions;
+
+namespace HuffmanCode;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main()
     {
-        string charArray;
-        if (args.Length > 0)
-        {
-            charArray = args[0];
-        }
-        else
-        {
-            charArray = "AEDCABDECBADAECADBAABEAADCBACEABDBAAACA";
-        }
+        string str = "AEDCABDECBADAECADBAABEAADCBACEABDBAAACA";
 
-        //string cwd = Directory.GetCurrentDirectory();
-        //const string fileName = "binaryFile.dat";
-        //string filePath = Path.Combine(cwd, fileName);
-        //Console.WriteLine(Directory.GetParent(Directory.GetParent(filePath).ToString()));
+        Console.WriteLine($"{str}: original string");
 
-        var (encodedString, huffmanCodeTree) = HuffmanCode.EncodeString(charArray);
+        await using EncodedStringContext context = HuffmanCode.EncodeString(str);
 
-        string decodedString = HuffmanCode.DecodeString(encodedString, huffmanCodeTree);
+        context.HuffmanTreeRootNode.PrintBFS();
 
-        Console.WriteLine(charArray);
-        Console.WriteLine(decodedString);
+        string decodedString = HuffmanCode.DecodeToString(context.Stream, context.NumBits, context.HuffmanTreeRootNode);
+
+        Console.WriteLine($"{str}: original string");
+        Console.WriteLine($"{decodedString}: decoded string");
 
         Console.WriteLine();
-        bool matches = charArray.Equals(decodedString.ToString());
+        bool matches = str.Equals(decodedString.ToString());
         Console.WriteLine($"Origin string matches encoded then decoded result: {matches}");
     }
 }

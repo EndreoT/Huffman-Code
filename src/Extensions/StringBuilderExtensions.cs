@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
-namespace Huffman_Code.Extensions
+namespace HuffmanCode.Extensions
 {
     internal static class StringBuilderExtensions
     {
-        public static void ReverseStringBuilder(this StringBuilder sb)
+        public static void Reverse(this StringBuilder sb)
         {
             if (sb.Length == 0)
             {
