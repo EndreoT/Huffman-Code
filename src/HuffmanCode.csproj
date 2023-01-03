@@ -8,8 +8,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Program.cs~RF4944908a.TMP" />
-  </ItemGroup>
-
 </Project>

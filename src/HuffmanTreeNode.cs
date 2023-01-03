@@ -2,7 +2,7 @@
 
 namespace HuffmanCode
 {
-    public class TreeNode
+    public class HuffmanTreeNode
     {
         public const int HuffmanCodeStartSize = 0;
 
@@ -10,13 +10,13 @@ namespace HuffmanCode
 
         public int Frequency { get; }
 
-        public TreeNode? Left { get; set; }
+        public HuffmanTreeNode? Left { get; set; }
 
-        public TreeNode? Right { get; set; }
+        public HuffmanTreeNode? Right { get; set; }
 
         public BitArray HuffmanCode { private get; set; }
 
-        public TreeNode(int frequency, char character = char.MinValue, TreeNode? left = null, TreeNode? right = null)
+        public HuffmanTreeNode(int frequency, char character = char.MinValue, HuffmanTreeNode? left = null, HuffmanTreeNode? right = null)
         {
             Frequency = frequency;
             Character = character;
@@ -33,6 +33,11 @@ namespace HuffmanCode
         public bool IsLeafNode()
         {
             return Left is null && Right is null;
+        }
+
+        public bool IsPseudoEOFCharacter()
+        {
+            return Character == Constants.PseudoEndOfFileChar;
         }
 
         public override string ToString()

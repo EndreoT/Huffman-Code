@@ -5,14 +5,14 @@ namespace HuffmanCode.Extensions
 {
     public static class BitArrayExtensions
     {
-        public static string ToStringReversed(this BitArray bitArray)
+        public static string ToStringReversed(this BitArray bits)
         {
             StringBuilder stringBuilder = new(8);
             int index = 0;
 
-            while (index < bitArray.Count)
+            while (index < bits.Count)
             {
-                bool bit = bitArray.Get(index);
+                bool bit = bits.Get(index);
                 char bitChar = bit ? '1' : '0';
                 stringBuilder.Append(bitChar);
                 ++index;
@@ -22,19 +22,30 @@ namespace HuffmanCode.Extensions
             return stringBuilder.ToString();
         }
 
-        public static BitArray ShiftLeftOnce(this BitArray currentHFCode)
+        public static BitArray LeftShiftOnce(this BitArray bits)
         {
-            ++currentHFCode.Length;
-            currentHFCode.LeftShift(1);
-            return currentHFCode;
+            ++bits.Length;
+            bits.LeftShift(1);
+            return bits;
         }
 
-        public static BitArray ShiftLeftOncePlusOne(this BitArray currentHFCode)
+        public static BitArray LeftShiftOncePlusOne(this BitArray bits)
         {
-            ++currentHFCode.Length;
-            currentHFCode.LeftShift(1);
-            currentHFCode.Set(0, true);
-            return currentHFCode;
+            bits = LeftShiftOnce(bits);
+            bits.Set(0, true);
+            return bits;
+        }
+
+        public static byte[] ToByteArray(this BitArray bits)
+        {
+            if (bits.Length == 0)
+            {
+                return Array.Empty<byte>();
+            }
+
+            byte[] res = new byte[((bits.Length - 1) / 8) + 1];
+            bits.CopyTo(res, 0);
+            return res;
         }
     }
 }
