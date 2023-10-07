@@ -3,7 +3,7 @@ using System.Text;
 
 namespace HuffmanCode.Extensions
 {
-    public static class BitArrayExtensions
+    internal static class BitArrayExtensions
     {
         public static string ToStringReversed(this BitArray bits)
         {

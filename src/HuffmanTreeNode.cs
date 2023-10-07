@@ -2,7 +2,7 @@
 
 namespace HuffmanCode
 {
-    public class HuffmanTreeNode
+    internal class HuffmanTreeNode
     {
         public const int HuffmanCodeStartSize = 0;
 

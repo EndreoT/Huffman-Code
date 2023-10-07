@@ -2,6 +2,9 @@
 {
     internal class Constants
     {
-        public const char PseudoEndOfFileChar = '\u25A0';
+        /// <summary>
+        /// Character used internally as a marker to indicate the end of the file
+        /// </summary>
+        internal const char PseudoEndOfFileChar = '\u25A0';
     }
 }

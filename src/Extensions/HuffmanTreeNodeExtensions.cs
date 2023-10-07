@@ -2,7 +2,7 @@
 
 namespace HuffmanCode.Extensions
 {
-    public static class HuffmanTreeNodeExtensions
+    internal static class HuffmanTreeNodeExtensions
     {
         public static void PrintBFS(this HuffmanTreeNode treeNode)
         {

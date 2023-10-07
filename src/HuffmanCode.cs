@@ -1,59 +1,55 @@
 ﻿using HuffmanCode.Extensions;
 using System.Collections;
-using System.Text;
 
 namespace HuffmanCode;
 
-public class HuffmanCode : IHuffmanCode
+public static class HuffmanCode
 {
-    public Stream EncodeString(string str)
+    public static Stream EncodeString(ReadOnlySpan<char> input)
     {
-        ValidateText(str);
+        if (input.Length == 0)
+        {
+            return Stream.Null;
+        }
+        ValidateText(input);
 
-        str += Constants.PseudoEndOfFileChar;
-
-        Dictionary<char, int> charCount = Utils.BuildCharacterFrequencyMap(str);
+        Dictionary<char, int> charCount = Utils.BuildCharacterFrequencyMap(input);
 
         HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charCount);
+
+        root.PrintBFS();
 
         Dictionary<char, BitArray> huffmanCode = Utils.BuildCharacterMapToHuffmanCode(root);
 
         PrintHuffmanCode(huffmanCode);
 
-        Stream stream = new MemoryStream();
-        using BinaryWriter writer = new(stream, Encoding.UTF8, true);
+        BitArray bits = Utils.EncodeStringToBits(input, huffmanCode);
 
-        // Write encoding header
-        string huffmanEncodingHeader = GetEncodingHeaderString(charCount);
-        int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
-        writer.Write(numBytesForEncoding);
-        writer.Write(huffmanEncodingHeader);
+        string huffmanEncodingHeader = Utils.GetHuffmanEncodingHeader(charCount);
 
-        // Write data
-        BitArray bits = Utils.EncodeStringToBits(str, huffmanCode);
-        writer.Write(GetBytes(bits));
-
-        root.PrintBFS();
-
-        return stream;
+        return Utils.WriteHeaderAndDataToStream(GetBytes(bits), huffmanEncodingHeader);
     }
 
-    public string DecodeToString(Stream stream)
+    private static void ValidateText(ReadOnlySpan<char> input)
+    {
+        foreach (char c in input)
+        {
+            if (c == Constants.PseudoEndOfFileChar)
+            {
+                throw new ArgumentException($"Input cannot contain the character: {Constants.PseudoEndOfFileChar}", nameof(input));
+            }
+        }
+    }
+
+    public static string DecodeToString(Stream stream)
     {
         stream = stream ?? throw new ArgumentNullException(nameof(stream));
+        if (stream == Stream.Null || stream.Length == 0)
+        {
+            return "";
+        }
 
         return Utils.DecodeToString(stream);
-    }
-
-    private static string GetEncodingHeaderString(Dictionary<char, int> charCount)
-    {
-        StringBuilder sb = new();
-        foreach (KeyValuePair<char, int> kv in charCount)
-        {
-            sb.Append($"{kv.Key}{kv.Value}");
-            sb.Append(' ');
-        }
-        return sb.ToString();
     }
 
     private static byte[] GetBytes(BitArray bits)
@@ -67,19 +63,7 @@ public class HuffmanCode : IHuffmanCode
         return bytes;
     }
 
-    private static void ValidateText(string str)
-    {
-        if (str is null)
-        {
-            throw new ArgumentNullException(nameof(str));
-        }
-        if (str[str.Length - 1] == Constants.PseudoEndOfFileChar)
-        {
-            throw new ArgumentException($"Text cannot end with the {Constants.PseudoEndOfFileChar} character", nameof(str));
-        }
-    }
-
-    public void PrintHuffmanCode(Dictionary<char, BitArray> huffmanCode)
+    public static void PrintHuffmanCode(Dictionary<char, BitArray> huffmanCode)
     {
         foreach (KeyValuePair<char, BitArray> item in huffmanCode)
         {

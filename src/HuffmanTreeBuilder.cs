@@ -1,6 +1,6 @@
 ﻿namespace HuffmanCode;
 
-public class HuffmanTreeBuilder
+internal class HuffmanTreeBuilder
 {
     public static HuffmanTreeNode BuildHuffmanTree(Dictionary<char, int> charCount)
     {

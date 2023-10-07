@@ -6,10 +6,10 @@ namespace HuffmanCode
 {
     internal static class Utils
     {
-        public static Dictionary<char, int> BuildCharacterFrequencyMap(string str)
+        public static Dictionary<char, int> BuildCharacterFrequencyMap(ReadOnlySpan<char> input)
         {
             Dictionary<char, int> charCount = new();
-            foreach (char c in str)
+            foreach (char c in input)
             {
                 if (charCount.ContainsKey(c))
                 {
@@ -20,6 +20,10 @@ namespace HuffmanCode
                     charCount[c] = 1;
                 }
             }
+
+            // Add pseudo EOF character
+            charCount[Constants.PseudoEndOfFileChar] = 1;
+
             return charCount;
         }
 
@@ -52,17 +56,21 @@ namespace HuffmanCode
             return huffmanCode;
         }
 
-        public static BitArray EncodeStringToBits(string str, Dictionary<char, BitArray> huffmanCode)
+        public static BitArray EncodeStringToBits(ReadOnlySpan<char> input, Dictionary<char, BitArray> huffmanCode)
         {
             BitArray bitArray = new(0);
-            foreach (char c in str)
+
+            BitArray? bitsToAdd;
+            int numBitsToAdd;
+
+            foreach (char c in input)
             {
-                if (!huffmanCode.TryGetValue(c, out BitArray? bitsToAdd))
+                if (!huffmanCode.TryGetValue(c, out bitsToAdd))
                 {
                     throw new KeyNotFoundException($"Character '{c}' does not exist in huffman code.");
                 }
 
-                int numBitsToAdd = bitsToAdd.Count;
+                numBitsToAdd = bitsToAdd.Count;
 
                 bitArray.Length += numBitsToAdd;
                 bitArray.LeftShift(numBitsToAdd);
@@ -71,6 +79,21 @@ namespace HuffmanCode
                 {
                     bitArray[i] = bitsToAdd[i];
                 }
+            }
+
+            if (!huffmanCode.TryGetValue(Constants.PseudoEndOfFileChar, out bitsToAdd))
+            {
+                throw new KeyNotFoundException($"Character '{Constants.PseudoEndOfFileChar}' does not exist in huffman code.");
+            }
+
+            numBitsToAdd = bitsToAdd.Count;
+
+            bitArray.Length += numBitsToAdd;
+            bitArray.LeftShift(numBitsToAdd);
+
+            for (int i = numBitsToAdd - 1; i >= 0; i--)
+            {
+                bitArray[i] = bitsToAdd[i];
             }
 
             // Add padding to reach a full byte if needed
@@ -199,6 +222,33 @@ namespace HuffmanCode
             }
 
             return count;
+        }
+
+        public static string GetHuffmanEncodingHeader(Dictionary<char, int> charCount)
+        {
+            StringBuilder sb = new();
+            foreach (KeyValuePair<char, int> kv in charCount)
+            {
+                sb.Append($"{kv.Key}{kv.Value}");
+                sb.Append(' ');
+            }
+            return sb.ToString();
+        }
+
+        public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
+        {
+            Stream stream = new MemoryStream();
+            using BinaryWriter writer = new(stream, Encoding.UTF8, true);
+
+            // Write encoding header
+            int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
+            writer.Write(numBytesForEncoding);
+            writer.Write(huffmanEncodingHeader);
+
+            // Write data
+            writer.Write(bytes);
+
+            return stream;
         }
     }
 }
