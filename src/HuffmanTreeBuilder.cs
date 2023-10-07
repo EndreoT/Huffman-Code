@@ -1,22 +1,24 @@
-﻿namespace HuffmanCode;
+﻿using System.Text;
+
+namespace HuffmanCode;
 
 internal class HuffmanTreeBuilder
 {
-    public static HuffmanTreeNode BuildHuffmanTree(Dictionary<char, int> charCount)
+    public static HuffmanTreeNode BuildHuffmanTree(Dictionary<Rune, int> charFrequency)
     {
-        PriorityQueue<HuffmanTreeNode, int> heap = BuildTreeNodeFrequencyHeap(charCount);
+        PriorityQueue<HuffmanTreeNode, int> heap = BuildTreeNodeFrequencyHeap(charFrequency);
 
         return BuildHuffmanTreeInternal(heap);
     }
 
-    public static PriorityQueue<HuffmanTreeNode, int> BuildTreeNodeFrequencyHeap(IDictionary<char, int> charMap)
+    public static PriorityQueue<HuffmanTreeNode, int> BuildTreeNodeFrequencyHeap(IDictionary<Rune, int> charFrequency)
     {
         PriorityQueue<HuffmanTreeNode, int> heap = new();
 
-        foreach (KeyValuePair<char, int> item in charMap)
+        foreach (KeyValuePair<Rune, int> item in charFrequency)
         {
             int frequency = item.Value;
-            char c = item.Key;
+            Rune c = item.Key;
             HuffmanTreeNode charNode = new(frequency, c, null, null);
             heap.Enqueue(charNode, frequency);
         }
@@ -31,7 +33,7 @@ internal class HuffmanTreeBuilder
             HuffmanTreeNode left = heap.Dequeue();
             int parentFrequency = left.Frequency + right.Frequency;
 
-            HuffmanTreeNode parent = new(parentFrequency, char.MinValue, left, right);
+            HuffmanTreeNode parent = new(parentFrequency, new Rune(char.MinValue), left, right);
             heap.Enqueue(parent, parentFrequency);
         }
 

@@ -1,10 +1,17 @@
 ﻿using HuffmanCode.Extensions;
 using System.Collections;
+using System.Text;
 
 namespace HuffmanCode;
 
 public static class HuffmanCode
 {
+    /// <summary>
+    /// Supports surrogate code points but not grapheme clusters
+    /// See <see href="https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-encoding-introduction"/>
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
     public static Stream EncodeString(ReadOnlySpan<char> input)
     {
         if (input.Length == 0)
@@ -13,28 +20,28 @@ public static class HuffmanCode
         }
         ValidateText(input);
 
-        Dictionary<char, int> charCount = Utils.BuildCharacterFrequencyMap(input);
+        Dictionary<Rune, int> charFrequency = input.BuildCharacterFrequencyMap();
 
-        HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charCount);
+        HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charFrequency);
 
         root.PrintBFS();
 
-        Dictionary<char, BitArray> huffmanCode = Utils.BuildCharacterMapToHuffmanCode(root);
+        Dictionary<Rune, BitArray> huffmanCode = root.BuildCharacterMapToHuffmanCode();
 
         PrintHuffmanCode(huffmanCode);
 
-        BitArray bits = Utils.EncodeStringToBits(input, huffmanCode);
+        BitArray bits = BitEncoder.EncodeInputToBits(input, huffmanCode);
 
-        string huffmanEncodingHeader = Utils.GetHuffmanEncodingHeader(charCount);
+        string huffmanEncodingHeader = Utils.GetHuffmanEncodingHeader(charFrequency);
 
         return Utils.WriteHeaderAndDataToStream(GetBytes(bits), huffmanEncodingHeader);
     }
 
     private static void ValidateText(ReadOnlySpan<char> input)
     {
-        foreach (char c in input)
+        foreach (Rune c in input.EnumerateRunes())
         {
-            if (c == Constants.PseudoEndOfFileChar)
+            if (c.Value == Constants.PseudoEndOfFileChar)
             {
                 throw new ArgumentException($"Input cannot contain the character: {Constants.PseudoEndOfFileChar}", nameof(input));
             }
@@ -49,7 +56,7 @@ public static class HuffmanCode
             return "";
         }
 
-        return Utils.DecodeToString(stream);
+        return Utils.DecodeHuffmanEncodingToString(stream);
     }
 
     private static byte[] GetBytes(BitArray bits)
@@ -63,9 +70,9 @@ public static class HuffmanCode
         return bytes;
     }
 
-    public static void PrintHuffmanCode(Dictionary<char, BitArray> huffmanCode)
+    public static void PrintHuffmanCode(Dictionary<Rune, BitArray> huffmanCode)
     {
-        foreach (KeyValuePair<char, BitArray> item in huffmanCode)
+        foreach (KeyValuePair<Rune, BitArray> item in huffmanCode)
         {
             BitArray b = item.Value;
             string bitStr = b.ToStringReversed();

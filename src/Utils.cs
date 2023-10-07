@@ -1,254 +1,164 @@
-﻿using HuffmanCode.Extensions;
-using System.Collections;
-using System.Text;
+﻿using System.Text;
 
-namespace HuffmanCode
+namespace HuffmanCode;
+
+internal static class Utils
 {
-    internal static class Utils
+    public static string DecodeHuffmanEncodingToString(Stream stream)
     {
-        public static Dictionary<char, int> BuildCharacterFrequencyMap(ReadOnlySpan<char> input)
+        StringBuilder stringBuilder = new();
+
+        stream.Position = 0;
+        using BinaryReader reader = new(stream);
+        int numBytesInHeader = reader.ReadInt32(); // Read header byte size // TODO uint32
+
+        numBytesInHeader += 1; // Account for space between header and payload
+
+        byte[] huffmanEncoding = reader.ReadBytes(numBytesInHeader);
+        string str = Encoding.UTF8.GetString(huffmanEncoding);
+
+        Dictionary<Rune, int> charFrequency = GetCharCountFromHuffmanStringEncoding(str);
+
+        HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charFrequency);
+
+        HuffmanTreeNode? node = root;
+        int numBytesToRead = (int)stream.Length - numBytesInHeader - sizeof(int);
+        for (int i = 0; i < numBytesToRead; i++)
         {
-            Dictionary<char, int> charCount = new();
-            foreach (char c in input)
+            byte byteRead = reader.ReadByte();
+
+            int offsetBit = 0;
+
+            for (int j = offsetBit; j < 8; j++)
             {
-                if (charCount.ContainsKey(c))
+                int bit = (byteRead >> (7 - j)) & 1;
+
+                if (bit == 0)
                 {
-                    charCount[c] += 1;
+                    node = node.Right;
                 }
                 else
                 {
-                    charCount[c] = 1;
+                    node = node.Left;
                 }
-            }
 
-            // Add pseudo EOF character
-            charCount[Constants.PseudoEndOfFileChar] = 1;
-
-            return charCount;
-        }
-
-        public static Dictionary<char, BitArray> BuildCharacterMapToHuffmanCode(HuffmanTreeNode root)
-        {
-            Dictionary<char, BitArray> huffmanCode = new();
-            Queue<HuffmanTreeNode> queue = new();
-
-            queue.Enqueue(root);
-
-            while (queue.Count > 0)
-            {
-                HuffmanTreeNode node = queue.Dequeue();
-
-                if (node.Left is not null)
+                if (node is null)
                 {
-                    node.Left.HuffmanCode = node.GetHuffmanCodeCopy().LeftShiftOncePlusOne();
-                    queue.Enqueue(node.Left);
+                    throw new Exception("node is null");
                 }
-                if (node.Right is not null)
+
+                if (node.IsPseudoEOFCharacter())
                 {
-                    node.Right.HuffmanCode = node.GetHuffmanCodeCopy().LeftShiftOnce();
-                    queue.Enqueue(node.Right);
+                    // Done with decoding. Ignore all remaining bits
+                    break;
                 }
+
                 if (node.IsLeafNode())
                 {
-                    huffmanCode.Add(node.Character, node.GetHuffmanCodeCopy());
+                    stringBuilder.Append(node.Character);
+                    node = root;
                 }
             }
-            return huffmanCode;
         }
 
-        public static BitArray EncodeStringToBits(ReadOnlySpan<char> input, Dictionary<char, BitArray> huffmanCode)
+        return stringBuilder.ToString();
+    }
+
+    /// <summary>
+    /// Encoding header example: 'A0 B11 C235 '
+    /// </summary>
+    /// <param name="header"></param>
+    /// <returns></returns>
+    public static Dictionary<Rune, int> GetCharCountFromHuffmanStringEncoding(ReadOnlySpan<char> header)
+    {
+        Dictionary<Rune, int> charCount = new();
+        bool isPairStart = false;
+        Rune currentChar = new('\0');
+        List<Rune> charCountDigits = new();
+
+        foreach (Rune s in header.EnumerateRunes())
         {
-            BitArray bitArray = new(0);
-
-            BitArray? bitsToAdd;
-            int numBitsToAdd;
-
-            foreach (char c in input)
+            if (!isPairStart)
             {
-                if (!huffmanCode.TryGetValue(c, out bitsToAdd))
-                {
-                    throw new KeyNotFoundException($"Character '{c}' does not exist in huffman code.");
-                }
-
-                numBitsToAdd = bitsToAdd.Count;
-
-                bitArray.Length += numBitsToAdd;
-                bitArray.LeftShift(numBitsToAdd);
-
-                for (int i = numBitsToAdd - 1; i >= 0; i--)
-                {
-                    bitArray[i] = bitsToAdd[i];
-                }
+                // Start a new character count pair
+                currentChar = s;
+                charCountDigits.Clear();
+                isPairStart = true;
+                continue;
             }
 
-            if (!huffmanCode.TryGetValue(Constants.PseudoEndOfFileChar, out bitsToAdd))
+            if (Rune.IsDigit(s))
             {
-                throw new KeyNotFoundException($"Character '{Constants.PseudoEndOfFileChar}' does not exist in huffman code.");
+                charCountDigits.Add(s);
             }
-
-            numBitsToAdd = bitsToAdd.Count;
-
-            bitArray.Length += numBitsToAdd;
-            bitArray.LeftShift(numBitsToAdd);
-
-            for (int i = numBitsToAdd - 1; i >= 0; i--)
+            else
             {
-                bitArray[i] = bitsToAdd[i];
+                // Reached a character count pair termination delimeter
+                int count = ParseDigitListToInt(charCountDigits);
+                charCount[currentChar] = count;
+                isPairStart = false;
             }
-
-            // Add padding to reach a full byte if needed
-            int numBitsInLastByte = bitArray.Length % 8;
-            if (numBitsInLastByte > 0)
-            {
-                int shiftLen = 8 - numBitsInLastByte;
-                bitArray.Length += shiftLen;
-                bitArray.LeftShift(shiftLen);
-            }
-
-            return bitArray;
         }
 
-        public static string DecodeToString(Stream stream)
+        return charCount;
+    }
+
+    public static int ParseDigitListToInt(IReadOnlyList<Rune> charCountDigits)
+    {
+        int count = 0;
+        int place = 1;
+        for (int i = charCountDigits.Count - 1; i >= 0; i--)
         {
-            stream = stream ?? throw new ArgumentNullException(nameof(stream));
-
-            StringBuilder stringBuilder = new();
-
-            stream.Position = 0;
-            using BinaryReader reader = new(stream);
-            int numBytesInHeader = reader.ReadInt32(); // Read header byte size
-
-            numBytesInHeader += 1; // Account for space between encoding and data
-
-            byte[] huffmanEncoding = reader.ReadBytes(numBytesInHeader);
-            var str = Encoding.UTF8.GetString(huffmanEncoding);
-            str = str[1..]; // TODO what is this first char?
-
-            Dictionary<char, int> charCount = GetCharCountFromHuffmanStringEncoding(str);
-
-            HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charCount);
-
-            HuffmanTreeNode? node = root;
-            int numBytesToRead = (int)stream.Length - numBytesInHeader - sizeof(int);
-            for (int i = 0; i < numBytesToRead; i++)
-            {
-                byte byteRead = reader.ReadByte();
-
-                int offsetBit = 0;
-
-                for (int j = offsetBit; j < 8; j++)
-                {
-                    int bit = (byteRead >> (7 - j)) & 1;
-
-                    if (bit == 0)
-                    {
-                        node = node.Right;
-                    }
-                    else
-                    {
-                        node = node.Left;
-                    }
-
-                    if (node is null)
-                    {
-                        throw new Exception("node is null");
-                    }
-
-                    if (node.IsPseudoEOFCharacter())
-                    {
-                        // Done with decoding. Ignore all remaining bits
-                        break;
-                    }
-
-                    if (node.IsLeafNode())
-                    {
-                        stringBuilder.Append(node.Character);
-                        node = root;
-                    }
-                }
-            }
-
-            return stringBuilder.ToString();
+            int digit = int.Parse(charCountDigits[i].ToString()); // TODO parse without alloc
+            count += digit * place;
+            place *= 10;
         }
 
-        /// <summary>
-        /// Encoding header example: 'A0 B11 C235 '
-        /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
-        public static Dictionary<char, int> GetCharCountFromHuffmanStringEncoding(string str)
+        return count;
+    }
+
+    public static string GetHuffmanEncodingHeader(Dictionary<Rune, int> charFrequency)
+    {
+        StringBuilder sb = new();
+        foreach (KeyValuePair<Rune, int> kv in charFrequency) // TODO uint
         {
-            Dictionary<char, int> charCount = new();
-            bool isPairStart = false;
-            char currentChar = '\0';
-            List<char> charCountDigits = new();
-
-            foreach (char s in str)
-            {
-                if (!isPairStart)
-                {
-                    // Start a new character count pair
-                    currentChar = s;
-                    charCountDigits.Clear();
-                    isPairStart = true;
-                    continue;
-                }
-
-                if (char.IsDigit(s))
-                {
-                    charCountDigits.Add(s);
-                }
-                else
-                {
-                    // Reached a character count pair termination delimeter
-                    int count = ParseDigitListToInt(charCountDigits);
-                    charCount[currentChar] = count;
-                    isPairStart = false;
-                }
-            }
-
-            return charCount;
+            sb.Append(kv.Key);
+            sb.Append(kv.Value);
+            sb.Append(' '); // Add delimeter
         }
+        return sb.ToString();
+    }
 
-        public static int ParseDigitListToInt(IList<char> charCountDigits)
-        {
-            int count = 0;
-            int place = 1;
-            for (int i = charCountDigits.Count - 1; i >= 0; i--)
-            {
-                int digit = int.Parse(charCountDigits[i].ToString());
-                count += digit * place;
-                place *= 10;
-            }
+    //public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
+    //{
+    //    Stream stream = new MemoryStream();
+    //    using BinaryWriter writer = new(stream, Encoding.UTF8, true);
 
-            return count;
-        }
+    //    // Write encoding header
+    //    int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
+    //    writer.Write(numBytesForEncoding);
+    //    writer.Write(huffmanEncodingHeader);
 
-        public static string GetHuffmanEncodingHeader(Dictionary<char, int> charCount)
-        {
-            StringBuilder sb = new();
-            foreach (KeyValuePair<char, int> kv in charCount)
-            {
-                sb.Append($"{kv.Key}{kv.Value}");
-                sb.Append(' ');
-            }
-            return sb.ToString();
-        }
+    //    // Write payload
+    //    writer.Write(bytes);
 
-        public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
-        {
-            Stream stream = new MemoryStream();
-            using BinaryWriter writer = new(stream, Encoding.UTF8, true);
+    //    return stream;
+    //}
 
-            // Write encoding header
-            int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
-            writer.Write(numBytesForEncoding);
-            writer.Write(huffmanEncodingHeader);
+    public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
+    {
+        Stream stream = new MemoryStream();
+        using BinaryWriter writer = new(stream, Encoding.UTF8, true);
 
-            // Write data
-            writer.Write(bytes);
+        // Write encoding
+        int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
+        byte[] headerBytes = Encoding.UTF8.GetBytes(huffmanEncodingHeader);
+        writer.Write(numBytesForEncoding);
+        writer.Write(headerBytes);
 
-            return stream;
-        }
+        // Write payload
+        writer.Write(bytes);
+
+        return stream;
     }
 }

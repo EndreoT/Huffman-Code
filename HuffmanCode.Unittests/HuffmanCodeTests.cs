@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace HuffmanCode.Unittests
+﻿namespace HuffmanCode.Unittests
 {
     [TestClass]
     public class HuffmanCodeTests
@@ -10,13 +8,8 @@ namespace HuffmanCode.Unittests
         [TestMethod]
         public async Task TestFullEncodeDecode()
         {
-            string text = "Some string that I am using but Poacher\u2019s shows ⌀ unicode!";
-            byte[] textBytes = Encoding.Unicode.GetBytes(text);
-            var x = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Unicode, Encoding.UTF8, textBytes));
-
-
-            //string str = " \ud83d\udc02 AED1CABDEC🐂BADpAE11CAD🐂B AABEAAD 🐂 p CBACppqEABD2BAAACA ⌀ X";
-            string str = "AED1CABDECBADpAE11CADB AABEAAD p CBACppqEABD2BAAACA X";
+            string str = "👩🏽‍🚒‍‍🚒🚒 \udc69 \ud83d\udc69\ud83c\udffd \ud83d\udc02  👩🏽‍🚒A👩🏽‍🚒ED1CABDEC🐂BADpAE11CAD🐂B AABEAAD 🐂 p CBACppqEABD2BAAACA ⌀ X";
+            //string str = "AED1CABDECBADpAE11CADB AABEAAD p CBACppqEABD2BAAACA X";
             //string str = "";
 
             Console.WriteLine(@$"original string: ""{str}""");
@@ -29,7 +22,7 @@ namespace HuffmanCode.Unittests
             Console.WriteLine($"{decodedString}: decoded string");
 
             Console.WriteLine();
-            bool matches = str.Equals(decodedString.ToString());
+            bool matches = str.Equals(decodedString);
             Console.WriteLine($"Original string matches encoded the decoded result: {matches}");
         }
 
