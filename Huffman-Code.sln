@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HuffmanCode", "src\HuffmanCode.csproj", "{05E449F2-9C0A-49C0-A2CB-B694A211B2F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HuffmanCode.Unittests", "HuffmanCode.Unittests\HuffmanCode.Unittests.csproj", "{2B8992D9-740D-4FC7-BE82-28FA2F535D3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HuffmanCode.TestApp", "HuffmanCode.Unittests\HuffmanCode.TestApp.csproj", "{2B8992D9-740D-4FC7-BE82-28FA2F535D3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -12,14 +12,12 @@ internal static class Utils
         using BinaryReader reader = new(stream);
         int numBytesInHeader = reader.ReadInt32(); // Read header byte size // TODO uint32
 
-        numBytesInHeader += 1; // Account for space between header and payload
+        //numBytesInHeader += 1; // Account for space between header and payload // TODO remove?
 
         byte[] huffmanEncoding = reader.ReadBytes(numBytesInHeader);
         string str = Encoding.UTF8.GetString(huffmanEncoding);
 
-        ReadOnlySpan<char> span = str.AsSpan()[1..str.Length]; // TODO what is this first character??
-
-        Dictionary<Rune, uint> charFrequency = BuildCharFrequencyFromHuffmanStringEncoding(span);
+        Dictionary<Rune, uint> charFrequency = BuildCharFrequencyFromHuffmanStringEncoding(str);
 
         HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charFrequency);
 
@@ -154,11 +152,12 @@ internal static class Utils
 
         // Write encoding
         int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
-        //byte[] headerBytes = Encoding.UTF8.GetBytes(huffmanEncodingHeader);
+        byte[] headerBytes = Encoding.UTF8.GetBytes(huffmanEncodingHeader);
         writer.Write(numBytesForEncoding);
-        writer.Write(huffmanEncodingHeader);
 
-        // Write payload
+        writer.Write(headerBytes);
+
+        //// Write payload
         writer.Write(bytes);
 
         return stream;

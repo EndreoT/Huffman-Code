@@ -1,5 +1,6 @@
 ﻿using HuffmanCode.Extensions;
 using System.Collections;
+using System.Globalization;
 using System.Text;
 
 namespace HuffmanCode;
@@ -37,10 +38,11 @@ public static class HuffmanCode
         return Utils.WriteHeaderAndDataToStream(GetBytes(bits), huffmanEncodingHeader);
     }
 
-    private static void ValidateText(ReadOnlySpan<char> input)
+    private static void ValidateText(ReadOnlySpan<char> input) // TODO validate if valid surrogates
     {
         foreach (Rune c in input.EnumerateRunes())
         {
+            UnicodeCategory uc = Rune.GetUnicodeCategory(c);
             if (c.Value == Constants.PseudoEndOfFileChar)
             {
                 throw new ArgumentException($"Input cannot contain the character: {Constants.PseudoEndOfFileChar}", nameof(input));

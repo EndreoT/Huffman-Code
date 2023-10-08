@@ -81,7 +81,6 @@ namespace HuffmanCode
                     right.HuffmanCode = node.GetHuffmanCodeCopy().LeftShiftOnce();
                     queue.Enqueue(right);
                 }
-
             }
             return huffmanCode;
         }
