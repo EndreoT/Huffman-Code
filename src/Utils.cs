@@ -17,7 +17,9 @@ internal static class Utils
         byte[] huffmanEncoding = reader.ReadBytes(numBytesInHeader);
         string str = Encoding.UTF8.GetString(huffmanEncoding);
 
-        Dictionary<Rune, int> charFrequency = GetCharCountFromHuffmanStringEncoding(str);
+        ReadOnlySpan<char> span = str.AsSpan()[1..str.Length]; // TODO what is this first character??
+
+        Dictionary<Rune, uint> charFrequency = BuildCharFrequencyFromHuffmanStringEncoding(span);
 
         HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charFrequency);
 
@@ -69,11 +71,11 @@ internal static class Utils
     /// </summary>
     /// <param name="header"></param>
     /// <returns></returns>
-    public static Dictionary<Rune, int> GetCharCountFromHuffmanStringEncoding(ReadOnlySpan<char> header)
+    public static Dictionary<Rune, uint> BuildCharFrequencyFromHuffmanStringEncoding(ReadOnlySpan<char> header)
     {
-        Dictionary<Rune, int> charCount = new();
+        Dictionary<Rune, uint> charFrequency = new();
         bool isPairStart = false;
-        Rune currentChar = new('\0');
+        Rune currentChar = default;
         List<Rune> charCountDigits = new();
 
         foreach (Rune s in header.EnumerateRunes())
@@ -94,33 +96,33 @@ internal static class Utils
             else
             {
                 // Reached a character count pair termination delimeter
-                int count = ParseDigitListToInt(charCountDigits);
-                charCount[currentChar] = count;
+                uint count = ParseDigitListToInt(charCountDigits);
+                charFrequency[currentChar] = count;
                 isPairStart = false;
             }
         }
 
-        return charCount;
+        return charFrequency;
     }
 
-    public static int ParseDigitListToInt(IReadOnlyList<Rune> charCountDigits)
+    public static uint ParseDigitListToInt(IReadOnlyList<Rune> digits)
     {
-        int count = 0;
+        uint count = 0;
         int place = 1;
-        for (int i = charCountDigits.Count - 1; i >= 0; i--)
+        for (int i = digits.Count - 1; i >= 0; i--)
         {
-            int digit = int.Parse(charCountDigits[i].ToString()); // TODO parse without alloc
-            count += digit * place;
+            int digit = Convert.ToInt32(digits[i].Value - 48); // 48 is ascii 0
+            count += (uint)(digit * place);
             place *= 10;
         }
 
         return count;
     }
 
-    public static string GetHuffmanEncodingHeader(Dictionary<Rune, int> charFrequency)
+    public static string GetHuffmanEncodingHeader(Dictionary<Rune, uint> charFrequency)
     {
         StringBuilder sb = new();
-        foreach (KeyValuePair<Rune, int> kv in charFrequency) // TODO uint
+        foreach (KeyValuePair<Rune, uint> kv in charFrequency)
         {
             sb.Append(kv.Key);
             sb.Append(kv.Value);
@@ -152,9 +154,9 @@ internal static class Utils
 
         // Write encoding
         int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
-        byte[] headerBytes = Encoding.UTF8.GetBytes(huffmanEncodingHeader);
+        //byte[] headerBytes = Encoding.UTF8.GetBytes(huffmanEncodingHeader);
         writer.Write(numBytesForEncoding);
-        writer.Write(headerBytes);
+        writer.Write(huffmanEncodingHeader);
 
         // Write payload
         writer.Write(bytes);

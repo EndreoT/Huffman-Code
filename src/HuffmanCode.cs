@@ -20,7 +20,7 @@ public static class HuffmanCode
         }
         ValidateText(input);
 
-        Dictionary<Rune, int> charFrequency = input.BuildCharacterFrequencyMap();
+        Dictionary<Rune, uint> charFrequency = input.BuildCharacterFrequencyMap();
 
         HuffmanTreeNode root = HuffmanTreeBuilder.BuildHuffmanTree(charFrequency);
 

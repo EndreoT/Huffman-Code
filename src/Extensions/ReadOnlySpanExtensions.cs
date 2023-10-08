@@ -4,13 +4,13 @@ namespace HuffmanCode.Extensions
 {
     internal static class ReadOnlySpanExtensions
     {
-        public static Dictionary<Rune, int> BuildCharacterFrequencyMap(this ReadOnlySpan<char> input)
+        public static Dictionary<Rune, uint> BuildCharacterFrequencyMap(this ReadOnlySpan<char> input)
         {
-            Dictionary<Rune, int> charFrequency = new();
+            Dictionary<Rune, uint> charFrequency = new();
             foreach (Rune c in input.EnumerateRunes())
             {
-                int count = charFrequency.GetValueOrDefault(c, 1);
-                charFrequency[c] = count;
+                uint count = charFrequency.GetValueOrDefault<Rune, uint>(c, 0);
+                charFrequency[c] = count + 1;
             }
 
             // Add pseudo EOF character

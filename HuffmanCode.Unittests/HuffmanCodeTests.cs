@@ -1,4 +1,6 @@
-﻿namespace HuffmanCode.Unittests
+﻿using System.Diagnostics;
+
+namespace HuffmanCode.Unittests
 {
     [TestClass]
     public class HuffmanCodeTests
@@ -8,7 +10,9 @@
         [TestMethod]
         public async Task TestFullEncodeDecode()
         {
-            string str = "👩🏽‍🚒‍‍🚒🚒 \udc69 \ud83d\udc69\ud83c\udffd \ud83d\udc02  👩🏽‍🚒A👩🏽‍🚒ED1CABDEC🐂BADpAE11CAD🐂B AABEAAD 🐂 p CBACppqEABD2BAAACA ⌀ X";
+            //string str = "AEABDAB";
+            string str = "👩🏽‍🚒‍‍🚒🚒 \ud801\udc69 👩🏽 \ud83d\udc69\ud83c\udffd \ud83d\udc02  👩🏽‍🚒A👩🏽‍🚒ED1CABDEC🐂BADpAE11CAD🐂B AABEAAD 🐂 p CBACppqEABD2BAAACA ⌀ X";
+            //string str = "👩🏽‍🚒‍‍🚒🚒 \udc69 \ud83d\udc69\ud83c\udffd \ud83d\udc02  👩🏽‍🚒A👩🏽‍🚒ED1CABDEC🐂BADpAE11CAD🐂B AABEAAD 🐂 p CBACppqEABD2BAAACA ⌀ X";
             //string str = "AED1CABDECBADpAE11CADB AABEAAD p CBACppqEABD2BAAACA X";
             //string str = "";
 
@@ -23,7 +27,7 @@
 
             Console.WriteLine();
             bool matches = str.Equals(decodedString);
-            Console.WriteLine($"Original string matches encoded the decoded result: {matches}");
+            Debug.Assert(matches);
         }
 
         public static async Task EncodeStringToFileAsync(string str)

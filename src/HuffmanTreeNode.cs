@@ -10,7 +10,7 @@ namespace HuffmanCode
 
         public Rune Character { get; }
 
-        public int Frequency { get; }
+        public uint Frequency { get; }
 
         public HuffmanTreeNode? Left { get; set; }
 
@@ -24,7 +24,7 @@ namespace HuffmanCode
             set { _huffmanCode = value; }
         }
 
-        public HuffmanTreeNode(int frequency, Rune character, HuffmanTreeNode? left = null, HuffmanTreeNode? right = null)
+        public HuffmanTreeNode(uint frequency, Rune character, HuffmanTreeNode? left = null, HuffmanTreeNode? right = null)
         {
             Frequency = frequency;
             Character = character;
