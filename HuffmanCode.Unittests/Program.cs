@@ -13,7 +13,7 @@ public static class Program
         //string str = "AED1CABDECBADpAE11CADB AABEAAD p CBACppqEABD2BAAACA X";
         //string str = "";
 
-        Console.WriteLine(@$"original string: ""{str}""");
+        Console.WriteLine($"original string: \"{str}\"");
 
         await EncodeStringToFileAsync(str);
 

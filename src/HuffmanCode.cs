@@ -1,6 +1,5 @@
 ﻿using HuffmanCode.Extensions;
 using System.Collections;
-using System.Globalization;
 using System.Text;
 
 namespace HuffmanCode;
@@ -8,10 +7,12 @@ namespace HuffmanCode;
 public static class HuffmanCode
 {
     /// <summary>
-    /// Supports surrogate code points but not grapheme clusters
-    /// See <see href="https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-encoding-introduction"/>
+    /// Encodes a <see cref="ReadOnlySpan{Char}"/> to a <see cref="Stream"/> using Huffman encoding. This function
+    /// supports valid surrogate code points, but does not support invalid surrogate code points (invalid pairs, etc.)
+    /// and not grapheme clusters. For more info on character encoding, see <see href="https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-encoding-introduction"/>.
+    /// To learn more about Huffman encoding, see <see href="https://web.stanford.edu/class/archive/cs/cs106b/cs106b.1176/assnFiles/assign6/huffman-encoding-supplement.pdf"/>
     /// </summary>
-    /// <param name="input"></param>
+    /// <param name="input">The input to be encoded</param>
     /// <returns></returns>
     public static Stream EncodeString(ReadOnlySpan<char> input)
     {
@@ -42,7 +43,6 @@ public static class HuffmanCode
     {
         foreach (Rune c in input.EnumerateRunes())
         {
-            UnicodeCategory uc = Rune.GetUnicodeCategory(c);
             if (c.Value == Constants.PseudoEndOfFileChar)
             {
                 throw new ArgumentException($"Input cannot contain the character: {Constants.PseudoEndOfFileChar}", nameof(input));
@@ -50,6 +50,12 @@ public static class HuffmanCode
         }
     }
 
+    /// <summary>
+    /// Decodes a Huffman encoded <see cref="Stream"/> back to a human readable string text
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static string DecodeToString(Stream stream)
     {
         stream = stream ?? throw new ArgumentNullException(nameof(stream));

@@ -10,9 +10,7 @@ internal static class Utils
 
         stream.Position = 0;
         using BinaryReader reader = new(stream);
-        int numBytesInHeader = reader.ReadInt32(); // Read header byte size // TODO uint32
-
-        //numBytesInHeader += 1; // Account for space between header and payload // TODO remove?
+        int numBytesInHeader = reader.ReadInt32(); // Read header byte size
 
         byte[] huffmanEncoding = reader.ReadBytes(numBytesInHeader);
         string str = Encoding.UTF8.GetString(huffmanEncoding);
@@ -65,7 +63,7 @@ internal static class Utils
     }
 
     /// <summary>
-    /// Encoding header example: 'A0 B11 C235 '
+    /// Encoding header example: 'A2 B11 C235 '
     /// </summary>
     /// <param name="header"></param>
     /// <returns></returns>
@@ -129,22 +127,6 @@ internal static class Utils
         return sb.ToString();
     }
 
-    //public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
-    //{
-    //    Stream stream = new MemoryStream();
-    //    using BinaryWriter writer = new(stream, Encoding.UTF8, true);
-
-    //    // Write encoding header
-    //    int numBytesForEncoding = Encoding.UTF8.GetByteCount(huffmanEncodingHeader);
-    //    writer.Write(numBytesForEncoding);
-    //    writer.Write(huffmanEncodingHeader);
-
-    //    // Write payload
-    //    writer.Write(bytes);
-
-    //    return stream;
-    //}
-
     public static Stream WriteHeaderAndDataToStream(byte[] bytes, string huffmanEncodingHeader)
     {
         Stream stream = new MemoryStream();
@@ -157,7 +139,7 @@ internal static class Utils
 
         writer.Write(headerBytes);
 
-        //// Write payload
+        // Write payload
         writer.Write(bytes);
 
         return stream;
